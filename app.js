@@ -15,7 +15,7 @@ var love = 0;
 var hate = 0;
 
 
-twit.stream('statuses/filter',{track: 'love'}, function(stream)
+twit.stream('statuses/filter',{track: 'amor'}, function(stream)
 {
 	stream.on('data',function(tweet)
 	{
@@ -25,8 +25,8 @@ twit.stream('statuses/filter',{track: 'love'}, function(stream)
 		{
 			io.sockets.volatile.emit('tweet',
 			{
-				//user: tweet.user.name,
-				//text:tweet.text
+				user: tweet.user.name,
+				text: tweet.text,
 				hate: (hate/ (love+hate) ) * 100,
 				love: (love/ (love+hate) ) * 100
 			})
@@ -36,7 +36,7 @@ twit.stream('statuses/filter',{track: 'love'}, function(stream)
     throw error;
   });
 });
-twit.stream('statuses/filter',{track: 'hate'}, function(stream)
+twit.stream('statuses/filter',{track: 'odio'}, function(stream)
 {
 	stream.on('data',function(tweet)
 	{
@@ -45,6 +45,8 @@ twit.stream('statuses/filter',{track: 'hate'}, function(stream)
 		if(tweet.user)
 		{
 			io.sockets.volatile.emit('tweet',{
+					user: tweet.user.name,
+					text: tweet.text,
 					hate: (hate/ (love+hate) ) * 100,
 					love: (love/ (love+hate) ) * 100
 				})

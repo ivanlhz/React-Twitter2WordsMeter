@@ -3,29 +3,47 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Love/Hate Meter</title>
 	<link rel="stylesheet" href="">
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 </head>
 <body>
-	<h1>Love/Hate meter - Twitter</h1>
-	<ul class="percentage">
-		<li class="love">0</li>
-		<li class="hate">0</li>
-	</ul>
-	<ul class="tweets"></ul>
+	<div class="container">
+		<h1>Medidor de Amor/Odio - Twitter</h1>
+		<h2>Porcentajes:</h2>
+		<div class="progress progress-striped active">
+			  <div class="love progress-bar progress-bar-danger" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">
+				<span></span>
+			  </div>
+			  <div class="hate progress-bar progress-bar-warning" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">
+			    <span></span>
+			  </div>
+		</div>
+		
+		<h2>Tweets</h2>
+		<ul class="tweets"></ul>
+
+	</div>
+	
 
 	<script src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
 	<script src="socket.io/socket.io.js"></script>
 	<script>
 		var socket = io.connect();
 		var tweetslist = $('ul.tweets');
-		var loveCounter = $('li.love');
-		var hateCounter = $('li.hate');
+		var loveCounter = $('div.love');
+		var hateCounter = $('div.hate');
+		var loveCounterPercentage = $('div.love span');
+		var hateCounterPercentage = $('div.hate span');
+
 		socket.on('tweet', function(data)
 		{
-			loveCounter.text('Love: '+data.love + '%');
-			hateCounter.text('Hate: ' + data.hate + '%');
-			//tweetslist.prepend('<li>' + data.user + ' : ' + data.text + '</li>');
+			loveCounter.attr("style","width:"+ data.love +"%");
+			hateCounter.attr("style","width:"+data.hate +"%");
+			loveCounterPercentage.text(Math.round(data.love*10)/10 + '% (Love,amor)');
+			hateCounterPercentage.text(Math.round(data.hate*10)/10 + '% (Hate,Odio)');
+			tweetslist.prepend('<li>' + data.user + ' : ' + data.text + '</li>');
 		});
 	</script>
 </body>
