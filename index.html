@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title></title>
+	<link rel="stylesheet" href="">
+</head>
+<body>
+	<h1>Love/Hate meter - Twitter</h1>
+	<ul class="percentage">
+		<li class="love">0</li>
+		<li class="hate">0</li>
+	</ul>
+	<ul class="tweets"></ul>
+
+	<script src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
+	<script src="socket.io/socket.io.js"></script>
+	<script>
+		var socket = io.connect();
+		var tweetslist = $('ul.tweets');
+		var loveCounter = $('li.love');
+		var hateCounter = $('li.hate');
+		socket.on('tweet', function(data)
+		{
+			loveCounter.text('Love: '+data.love + '%');
+			hateCounter.text('Hate: ' + data.hate + '%');
+			//tweetslist.prepend('<li>' + data.user + ' : ' + data.text + '</li>');
+		});
+	</script>
+</body>
+</html>

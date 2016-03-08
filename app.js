@@ -1,11 +1,9 @@
-var express = require('express');
+var app = require('express')();
+var server = require('http').Server(app);
 var Twitter = require('twitter');
-var app = express();
-var io = require('socket.io').listen(app);
+var io = require('socket.io')(server);
 
-/*app.get('/', function (req, res) {
-  res.send('Hello World')
-})*/
+server.listen(3000);
 
 var twit = new Twitter({
   consumer_key: 'mTyI1qpHWT9t0wDnqIRLGMts6',
@@ -13,16 +11,53 @@ var twit = new Twitter({
   access_token_key: '438218302-ISotA3VTrdCzI77KdMf7KitvuCsrD3rWUt1g2Vbo',
   access_token_secret: 'ADR4JfuQyGPcEubuiYJ8KmLEbhHetdqc6Cza7EMY4lPSw',
 });
+var love = 0;
+var hate = 0;
 
-twit.stream('statuses/filter',{track: 'love,hate'}, function(stream)
+
+twit.stream('statuses/filter',{track: 'love'}, function(stream)
 {
 	stream.on('data',function(tweet)
 	{
-		console.log(tweet.user +' : ' + tweet.text);
+		//console.log(JSON.stringify(tweet.user, null, 2));
+		love ++;
+		if(tweet.user)
+		{
+			io.sockets.volatile.emit('tweet',
+			{
+				//user: tweet.user.name,
+				//text:tweet.text
+				hate: (hate/ (love+hate) ) * 100,
+				love: (love/ (love+hate) ) * 100
+			})
+		}
+	});
+	stream.on('error', function(error) {
+    throw error;
+  });
+});
+twit.stream('statuses/filter',{track: 'hate'}, function(stream)
+{
+	stream.on('data',function(tweet)
+	{
+		//console.log(JSON.stringify(tweet.user, null, 2));
+		hate ++;
+		if(tweet.user)
+		{
+			io.sockets.volatile.emit('tweet',{
+					hate: (hate/ (love+hate) ) * 100,
+					love: (love/ (love+hate) ) * 100
+				})
+		}
 	});
 	stream.on('error', function(error) {
     throw error;
   });
 });
 
-app.listen(3000);
+
+//RUTEO
+
+app.get('/', function (req, res) {
+  res.sendFile(__dirname + '/index.html');
+})
