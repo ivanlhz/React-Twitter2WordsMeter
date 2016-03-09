@@ -11,51 +11,83 @@ var twit = new Twitter({
   access_token_key: '438218302-ISotA3VTrdCzI77KdMf7KitvuCsrD3rWUt1g2Vbo',
   access_token_secret: 'ADR4JfuQyGPcEubuiYJ8KmLEbhHetdqc6Cza7EMY4lPSw',
 });
-var love = 0;
-var hate = 0;
+var word1cnt = 0;
+var word2cnt = 0;
+var word1 = 'amor';
+var word2 = 'odio';
 
+io.on('connection', function (socket) 
+{ 
+  socket.on('send words', function (data)
+   {    
+	     word1 = data.word1;
+	     word2 = data.word2;
+	     //console.log(typeof twit.currentTwitStream1 );
+	     if( typeof twit.currentTwitStream1 != "undefined" && typeof twit.currentTwitStream2 != "undefined")
+	     {
+	     	word1cnt = 0;
+	     	word2cnt = 0;
+	     	twit.currentTwitStream1.destroy();
+	     	twit.currentTwitStream2.destroy();
+	     }
+	     beginTwitStream(); 
+  });
+});
 
-twit.stream('statuses/filter',{track: 'amor'}, function(stream)
+function beginTwitStream()
 {
-	stream.on('data',function(tweet)
-	{
-		//console.log(JSON.stringify(tweet.user, null, 2));
-		love ++;
-		if(tweet.user)
+	twit.stream('statuses/filter',{track: word1}, function(stream1)
 		{
-			io.sockets.volatile.emit('tweet',
+			twit.currentTwitStream1 = stream1;
+			stream1.on('data',function(tweet)
 			{
-				user: tweet.user.name,
-				text: tweet.text,
-				hate: (hate/ (love+hate) ) * 100,
-				love: (love/ (love+hate) ) * 100
-			})
-		}
-	});
-	stream.on('error', function(error) {
-    throw error;
-  });
-});
-twit.stream('statuses/filter',{track: 'odio'}, function(stream)
-{
-	stream.on('data',function(tweet)
-	{
-		//console.log(JSON.stringify(tweet.user, null, 2));
-		hate ++;
-		if(tweet.user)
+				//console.log(JSON.stringify(tweet.user, null, 2));
+				word1cnt ++;
+				if(tweet.user)
+				{
+					io.sockets.volatile.emit('tweet',
+					{
+						user: tweet.user.name,
+						text: tweet.text,
+						word2cnt: (word2cnt/ (word1cnt+word2cnt) ) * 100,
+						word1cnt: (word1cnt/ (word1cnt+word2cnt) ) * 100,
+						word1: word1,
+						word2: word2,
+						total: word1cnt+word2cnt
+					})
+				}
+			});
+			stream1.on('error', function(error) {
+		    throw error;
+		  });
+		});
+
+		twit.stream('statuses/filter',{track: word2}, function(stream2)
 		{
-			io.sockets.volatile.emit('tweet',{
-					user: tweet.user.name,
-					text: tweet.text,
-					hate: (hate/ (love+hate) ) * 100,
-					love: (love/ (love+hate) ) * 100
-				})
-		}
-	});
-	stream.on('error', function(error) {
-    throw error;
-  });
-});
+			twit.currentTwitStream2 = stream2;
+			stream2.on('data',function(tweet)
+			{
+				//console.log(JSON.stringify(tweet.user, null, 2));
+				word2cnt ++;
+				if(tweet.user)
+				{
+					io.sockets.volatile.emit('tweet',{
+							user: tweet.user.name,
+							text: tweet.text,
+							word2cnt: (word2cnt/ (word1cnt+word2cnt) ) * 100,
+							word1cnt: (word1cnt/ (word1cnt+word2cnt) ) * 100,
+							word1: word1,
+							word2: word2,
+							total: word1cnt+word2cnt
+						})
+				}
+			});
+			stream2.on('error', function(error) {
+		    throw error;
+		  });
+		});
+}
+
 
 
 //RUTEO
