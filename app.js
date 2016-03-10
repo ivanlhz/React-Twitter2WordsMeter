@@ -13,8 +13,8 @@ var twit = new Twitter({
 });
 var word1cnt = 0;
 var word2cnt = 0;
-var word1 = 'amor';
-var word2 = 'odio';
+var word1 = '';
+var word2 = '';
 
 io.on('connection', function (socket) 
 { 
