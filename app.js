@@ -1,9 +1,16 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var server = require('http').Server(app);
 var Twitter = require('twitter');
 var io = require('socket.io')(server);
+var port = process.env.PORT || 3000;
+var tweets = [];
 
-server.listen(3000);
+server.listen(port, function () {
+  console.log('Server listening at port %d', port);
+});
+// Routing
+app.use(express.static(__dirname + '/public'));
 
 var twit = new Twitter({
   consumer_key: 'mTyI1qpHWT9t0wDnqIRLGMts6',
@@ -11,27 +18,14 @@ var twit = new Twitter({
   access_token_key: '438218302-ISotA3VTrdCzI77KdMf7KitvuCsrD3rWUt1g2Vbo',
   access_token_secret: 'ADR4JfuQyGPcEubuiYJ8KmLEbhHetdqc6Cza7EMY4lPSw',
 });
-var word1cnt = 0;
-var word2cnt = 0;
-var word1 = '';
-var word2 = '';
+var word1 = 'amor';
+var word2 = 'odio';
 
-io.on('connection', function (socket) 
-{ 
-  socket.on('send words', function (data)
-   {    
-	     word1 = data.word1;
-	     word2 = data.word2;
-	     //console.log(typeof twit.currentTwitStream1 );
-	     if( typeof twit.currentTwitStream1 != "undefined" && typeof twit.currentTwitStream2 != "undefined")
-	     {
-	     	word1cnt = 0;
-	     	word2cnt = 0;
-	     	twit.currentTwitStream1.destroy();
-	     	twit.currentTwitStream2.destroy();
-	     }
-	     beginTwitStream(); 
-  });
+
+//SOCEKT.IO
+io.on('connection', function (socket)
+{
+  beginTwitStream();
 });
 
 function beginTwitStream()
@@ -41,20 +35,15 @@ function beginTwitStream()
 			twit.currentTwitStream1 = stream1;
 			stream1.on('data',function(tweet)
 			{
-				//console.log(JSON.stringify(tweet.user, null, 2));
-				word1cnt ++;
 				if(tweet.user)
-				{
-					io.sockets.volatile.emit('tweet',
-					{
-						user: tweet.user.name,
-						text: tweet.text,
-						word2cnt: (word2cnt/ (word1cnt+word2cnt) ) * 100,
-						word1cnt: (word1cnt/ (word1cnt+word2cnt) ) * 100,
-						word1: word1,
-						word2: word2,
-						total: word1cnt+word2cnt
-					})
+				{       var tweet_msg = {
+                      image: tweet.user.profile_image_url,
+                      name: tweet.user.name,
+                      text: tweet.text
+                    };
+                tweets.push(tweet_msg);
+
+				        io.sockets.volatile.emit('tweets',tweets);//Enviamos todos los twits a nuestro componente REACT
 				}
 			});
 			stream1.on('error', function(error) {
@@ -67,19 +56,14 @@ function beginTwitStream()
 			twit.currentTwitStream2 = stream2;
 			stream2.on('data',function(tweet)
 			{
-				//console.log(JSON.stringify(tweet.user, null, 2));
-				word2cnt ++;
-				if(tweet.user)
+        if(tweet.user)
 				{
-					io.sockets.volatile.emit('tweet',{
-							user: tweet.user.name,
-							text: tweet.text,
-							word2cnt: (word2cnt/ (word1cnt+word2cnt) ) * 100,
-							word1cnt: (word1cnt/ (word1cnt+word2cnt) ) * 100,
-							word1: word1,
-							word2: word2,
-							total: word1cnt+word2cnt
-						})
+          tweets.push({
+            image: tweet.user.profile_image_url,
+						name: tweet.user.name,
+						text: tweet.text
+					});
+					io.sockets.volatile.emit('tweets',JSON.stringify(tweets,null,4));//Enviamos todos los Twitis a nuestro componente REACT
 				}
 			});
 			stream2.on('error', function(error) {
@@ -88,10 +72,7 @@ function beginTwitStream()
 		});
 }
 
-
-
 //RUTEO
-
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/public/index.html');
 })
